@@ -2,4 +2,4 @@ deps:
 	npm install
 
 deploy-global-rule:
-	@echo "TBD"
+	node deploy/deployGlobalRule.js
