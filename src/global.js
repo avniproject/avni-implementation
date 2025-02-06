@@ -19,9 +19,7 @@ function getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounte
                     AND programEnrolment.individual.voided == false 
                     AND programEnrolment.voided == false 
                     AND programEnrolment.programExitDateTime == null
-                    AND subquery(encounters, $encounter, 
-                                    $encounter.encounterType.name == $1 AND $encounter.voided == false).@count == 1
-                    AND programEnrolment.enrolmentDateTime > $1`, encounterType1, encounterType2, cutoffDate);
+                    AND programEnrolment.enrolmentDateTime > $2`, encounterType1, encounterType2, cutoffDate);
 }
 
 function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDateConcept) {
@@ -50,19 +48,6 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName) 
                     AND programExitDateTime == null
                     AND subquery(encounters, $encounter, 
                                     $encounter.encounterType.name == $1 AND $encounter.voided == false).@count == 0`, programName, encounterType);
-}
-
-function getEnrolmentsWithNoEncounterOfAType_WithAnotherEncounterType(params, programName, encounterTypeName, dateEncounterTypeName) {
-    return params.db.objects('ProgramEnrolment')
-        .filtered(`voided == false 
-                    AND program.name == $0 
-                    AND individual.voided == false 
-                    AND programExitDateTime == null
-                    AND subquery(encounters, $encounter, 
-                                    $encounter.encounterType.name == $1 AND $encounter.voided == false).@count == 0
-                    AND subquery(encounters, $encounter, 
-                                    $encounter.encounterType.name == $2 AND $encounter.voided == false).@count == 1`,
-                                                    programName, encounterTypeName, dateEncounterTypeName);
 }
 
 () => {
@@ -96,11 +81,10 @@ function getEnrolmentsWithNoEncounterOfAType_WithAnotherEncounterType(params, pr
                                                                          }) {
         const encounters = getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounterTypeName, dateEncounterTypeName, cutoffMonths);
         const groupedEncounters = imports.lodash.groupBy(encounters, 'programEnrolment.uuid');
-
-        getEnrolmentsWithNoEncounterOfAType_WithAnotherEncounterType();
     }
 
     return {
-        getIndividualsNotPerSchedule_BasedOnEnrolmentObs: getIndividualsNotPerSchedule_BasedOnEnrolmentObs
+        getIndividualsNotPerSchedule_BasedOnEnrolmentObs: getIndividualsNotPerSchedule_BasedOnEnrolmentObs,
+        getIndividualsNotPerSchedule_BasedOnAnotherEncounterTypeObs: getIndividualsNotPerSchedule_BasedOnAnotherEncounterTypeObs
     }
 };
