@@ -79,7 +79,8 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName) 
                                                                              dateEncounterTypeName,
                                                                              cutoffMonths
                                                                          }) {
-        const encounters = getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounterTypeName, dateEncounterTypeName, cutoffMonths);
+        const cutoffDate = imports.moment(new Date()).subtract(cutoffMonths, 'months').toDate();
+        const encounters = getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounterTypeName, dateEncounterTypeName, cutoffDate);
         const groupedEncounters = imports.lodash.groupBy(encounters, 'programEnrolment.uuid');
     }
 
