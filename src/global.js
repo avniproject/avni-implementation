@@ -30,14 +30,29 @@ function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDat
     return day.min <= daysBetween && day.max > daysBetween;
 }
 
+function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, imports, schedule, encounterTypeName, dateConceptName, dateEncounterTypeName){
+    const dateEncounters = encounters.filter(enc => enc.encounterType.name == dateEncounterTypeName);
+    if(dateEncounters.length == 0) return false;
+    
+    const baseDate = getBaseDate(dateEncounters[0], dateEncounterTypeName);
+    const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
+    
+    const targetEncounters = encounters.filter(enc => enc.encounterType.name == encounterTypeName);
+    if(targetEncounters.length == 0) return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
+    if (targetEncounters.length >= schedule.length) return false;
+    
+    const day = schedule[targetEncounters.length];
+    return day.min <= daysBetween && day.max > daysBetween;
+}
+
 function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDateConcept) {
     const baseDate = getBaseDate(enrolment, enrolmentBaseDateConcept);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
     return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
 }
 
-function getBaseDate(enl, enrolmentBaseDateConcept) {
-    return enl.getObservationValue(enrolmentBaseDateConcept);
+function getBaseDate(entity, baseDateConcept) {
+    return entity.getObservationValue(baseDateConcept);
 }
 
 function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName) {
@@ -82,6 +97,10 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName) 
         const cutoffDate = imports.moment(new Date()).subtract(cutoffMonths, 'months').toDate();
         const encounters = getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounterTypeName, dateEncounterTypeName, cutoffDate);
         const groupedEncounters = imports.lodash.groupBy(encounters, 'programEnrolment.uuid');
+        const individuals = Object.keys(groupedEncounters)
+            .filter(enrolmentUuid => hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(groupedEncounters[enrolmentUuid], imports, schedule, encounterTypeName, dateConceptName, dateEncounterTypeName))
+            .map(enrolmentUuid => groupedEncounters[enrolmentUuid][0].programEnrolment.individual);
+        return individuals;
     }
 
     return {
