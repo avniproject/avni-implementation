@@ -34,7 +34,7 @@ function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, impo
     const dateEncounters = encounters.filter(enc => enc.encounterType.name == dateEncounterTypeName);
     if(dateEncounters.length == 0) return false;
     
-    const baseDate = getBaseDate(dateEncounters[0], dateEncounterTypeName);
+    const baseDate = getBaseDate(dateEncounters[0], dateConceptName);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
     
     const targetEncounters = encounters.filter(enc => enc.encounterType.name == encounterTypeName);
