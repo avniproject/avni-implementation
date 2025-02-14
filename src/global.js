@@ -1,6 +1,6 @@
 'use strict';
 
-function getAllEncountersOfType(params, encounterType, cutoffDate) {
+function getAllEncountersOfType(params, encounterType, cutoffDate, filterQuery) {
     return params.db.objects('ProgramEncounter')
         .filtered(`voided == false 
                     AND encounterType.name == $0
@@ -8,10 +8,11 @@ function getAllEncountersOfType(params, encounterType, cutoffDate) {
                     AND programEnrolment.individual.voided == false 
                     AND programEnrolment.voided == false 
                     AND programEnrolment.programExitDateTime == null
-                    AND programEnrolment.enrolmentDateTime > $1`, encounterType, cutoffDate);
+                    AND programEnrolment.enrolmentDateTime > $1
+                    AND ${filterQuery}`, encounterType, cutoffDate);
 }
 
-function getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounterType1, encounterType2, cutoffDate) {
+function getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounterType1, encounterType2, cutoffDate, filterQuery) {
     return params.db.objects('ProgramEncounter')
         .filtered(`voided == false 
                     AND (encounterType.name == $0 or encounterType.name == $1)
@@ -19,7 +20,8 @@ function getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounte
                     AND programEnrolment.individual.voided == false 
                     AND programEnrolment.voided == false 
                     AND programEnrolment.programExitDateTime == null
-                    AND programEnrolment.enrolmentDateTime > $2`, encounterType1, encounterType2, cutoffDate);
+                    AND programEnrolment.enrolmentDateTime > $2
+                    AND ${filterQuery}`, encounterType1, encounterType2, cutoffDate);
 }
 
 function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDateConcept) {
@@ -55,14 +57,17 @@ function getBaseDate(entity, baseDateConcept) {
     return entity.getObservationValue(baseDateConcept);
 }
 
-function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName) {
+function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, filterQuery) {
     return params.db.objects('ProgramEnrolment')
         .filtered(`voided == false 
                     AND program.name == $0 
                     AND individual.voided == false 
                     AND programExitDateTime == null
                     AND subquery(encounters, $encounter, 
-                                    $encounter.encounterType.name == $1 AND $encounter.voided == false).@count == 0`, programName, encounterType);
+                        $encounter.encounterType.name == $1 
+                        AND $encounter.voided == false
+                    ).@count == 0
+                    AND ${filterQuery}`, programName, encounterType);
 }
 
 () => {
@@ -71,16 +76,32 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName) 
         programName,
         encounterType,
         dateConceptName,
-        cutoffMonths
+        cutoffMonths,
+        genderValues,
+        addressValues
     }) {
         const cutoffDate = imports.moment(new Date()).subtract(cutoffMonths, 'months').toDate();
-        const encounters = getAllEncountersOfType(params, encounterType, cutoffDate);
+
+        let encounterFilterQuery = ` voided = false `;
+        let enrolmentFilterQuery = ` voided = false `;
+        if(genderValues.length > 0){
+            const output = `{${genderValues.map(item => `'${item}'`).join(', ')}}`;
+            encounterFilterQuery = ` programEnrolment.individual.gender.uuid IN ${output} `;
+            enrolmentFilterQuery = ` individual.gender.uuid IN ${output} `
+        }
+        if(addressValues.length > 0){
+            const output = `{${addressValues.map(item => `'${item}'`).join(', ')}}`;
+            encounterFilterQuery += `AND programEnrolment.individual.lowestAddressLevel.uuid IN ${output} `;
+            enrolmentFilterQuery += `AND individual.lowestAddressLevel.uuid IN ${output} `
+        }
+
+        const encounters = getAllEncountersOfType(params, encounterType, cutoffDate, encounterFilterQuery);
         const enrolmentEncounters = imports.lodash.groupBy(encounters, 'programEnrolment.uuid');
         const individuals = Object.keys(enrolmentEncounters)
             .filter(enrolmentUuid => hasIncompleteEncounters(enrolmentEncounters[enrolmentUuid], imports, schedule, dateConceptName))
             .map(enrolmentUuid => enrolmentEncounters[enrolmentUuid][0].programEnrolment.individual);
 
-        const noEncounterEnrolments = getEnrolmentsWithNoEncounterOfType(params, encounterType, programName)
+        const noEncounterEnrolments = getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, enrolmentFilterQuery)
             .filter((enrolment) => enrolmentHasDueEncounter(enrolment, imports, schedule, dateConceptName));
 
         return individuals.concat(noEncounterEnrolments.map(enrolment => enrolment.individual));
@@ -92,10 +113,23 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName) 
                                                                              encounterTypeName,
                                                                              dateConceptName,
                                                                              dateEncounterTypeName,
-                                                                             cutoffMonths
+                                                                             cutoffMonths,
+                                                                             genderValues,
+                                                                             addressValues
                                                                          }) {
         const cutoffDate = imports.moment(new Date()).subtract(cutoffMonths, 'months').toDate();
-        const encounters = getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounterTypeName, dateEncounterTypeName, cutoffDate);
+
+        let filterQuery = ` voided = false `;
+        if(genderValues.length > 0){
+            const output = `{${genderValues.map(item => `'${item}'`).join(', ')}}`;
+            filterQuery = ` programEnrolment.individual.gender.uuid IN ${output} `;
+        }
+        if(addressValues.length > 0){
+            const output = `{${addressValues.map(item => `'${item}'`).join(', ')}}`;
+            filterQuery += `AND programEnrolment.individual.lowestAddressLevel.uuid IN ${output} `;
+        }
+
+        const encounters = getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounterTypeName, dateEncounterTypeName, cutoffDate, filterQuery);
         const groupedEncounters = imports.lodash.groupBy(encounters, 'programEnrolment.uuid');
         const individuals = Object.keys(groupedEncounters)
             .filter(enrolmentUuid => hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(groupedEncounters[enrolmentUuid], imports, schedule, encounterTypeName, dateConceptName, dateEncounterTypeName))
