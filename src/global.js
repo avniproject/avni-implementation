@@ -84,12 +84,12 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, 
 
         let encounterFilterQuery = ` voided = false `;
         let enrolmentFilterQuery = ` voided = false `;
-        if(genderValues.length > 0){
+        if(genderValues && genderValues.length > 0){
             const output = `{${genderValues.map(item => `'${item}'`).join(', ')}}`;
             encounterFilterQuery = ` programEnrolment.individual.gender.uuid IN ${output} `;
             enrolmentFilterQuery = ` individual.gender.uuid IN ${output} `
         }
-        if(addressValues.length > 0){
+        if(addressValues && addressValues.length > 0){
             const output = `{${addressValues.map(item => `'${item}'`).join(', ')}}`;
             encounterFilterQuery += `AND programEnrolment.individual.lowestAddressLevel.uuid IN ${output} `;
             enrolmentFilterQuery += `AND individual.lowestAddressLevel.uuid IN ${output} `
@@ -120,11 +120,11 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, 
         const cutoffDate = imports.moment(new Date()).subtract(cutoffMonths, 'months').toDate();
 
         let filterQuery = ` voided = false `;
-        if(genderValues.length > 0){
+        if(genderValues && genderValues.length > 0){
             const output = `{${genderValues.map(item => `'${item}'`).join(', ')}}`;
             filterQuery = ` programEnrolment.individual.gender.uuid IN ${output} `;
         }
-        if(addressValues.length > 0){
+        if(addressValues && addressValues.length > 0){
             const output = `{${addressValues.map(item => `'${item}'`).join(', ')}}`;
             filterQuery += `AND programEnrolment.individual.lowestAddressLevel.uuid IN ${output} `;
         }
