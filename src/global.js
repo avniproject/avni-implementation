@@ -53,8 +53,16 @@ function observationEligibilityCheck(encounters, observation){
     return encounters.some((enc) => {
         return enc.observations.some((obs) => {
             const valueJSON = JSON.parse(obs.valueJSON);
-            return obs.concept.uuid == observation.uuid && 
-                (Array.isArray(observation.answer) ? Array.isArray(valueJSON.answer) && observation.answer.some(ans => valueJSON.answer.includes(ans)) : valueJSON.answer == observation.answer);
+            
+            if (typeof observation.answer == "string") {
+                return obs.concept.uuid == observation.uuid && valueJSON.answer == observation.answer;
+            }
+
+            if (Array.isArray(observation.answer) && Array.isArray(valueJSON.answer)) {
+                return obs.concept.uuid === observation.uuid && observation.answer.some(ans => valueJSON.answer.includes(ans));
+            }
+
+            return false;
         })
     })
 }
