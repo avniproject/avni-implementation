@@ -111,7 +111,7 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, 
         const encounters = getAllEncountersOfType(params, encounterType, cutoffDate, encounterFilterQuery);
         const enrolmentEncounters = imports.lodash.groupBy(encounters, 'programEnrolment.uuid');
         const individuals = Object.keys(enrolmentEncounters)
-            .filter(enrolmentUuid => hasIncompleteEncounters(enrolmentEncounters[enrolmentUuid], imports, schedule, dateConceptName))
+            .filter(enrolmentUuid => hasIncompleteEncounters(enrolmentEncounters[enrolmentUuid], imports, schedule, dateConceptName, observation))
             .map(enrolmentUuid => enrolmentEncounters[enrolmentUuid][0].programEnrolment.individual);
 
         const noEncounterEnrolments = getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, enrolmentFilterQuery)
