@@ -26,7 +26,7 @@ function getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounte
 
 function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDateConcept, observation) {
     if (encounters.length >= schedule.length) return false;
-    if(observation && !observationEligibilityCheck(encounters, observation)) return false;
+    if(observation && observationEligibilityCheck(encounters, observation)) return false;
     const baseDate = getBaseDate(encounters[0].programEnrolment, enrolmentBaseDateConcept);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
     const day = schedule[encounters.length];
@@ -42,7 +42,7 @@ function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, impo
     
     const targetEncounters = encounters.filter(enc => enc.encounterType.name == encounterTypeName);
     if(targetEncounters.length == 0) return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
-    if(observation && !observationEligibilityCheck(targetEncounters, observation)) return false;
+    if(observation && observationEligibilityCheck(targetEncounters, observation)) return false;
     if (targetEncounters.length >= schedule.length) return false;
     
     const day = schedule[targetEncounters.length];
