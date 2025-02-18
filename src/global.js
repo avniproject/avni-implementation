@@ -51,7 +51,7 @@ function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, impo
 
 function observationEligibilityCheck(encounters, observation){
     return encounters.some((enc) => {
-        return enc.observation.some((obs) => {
+        return enc.observations.some((obs) => {
             const valueJSON = JSON.parse(obs.valueJSON);
             return obs.concept.uuid == observation.uuid && 
                 (Array.isArray(observation.answer) ? Array.isArray(valueJSON.answer) && observation.answer.some(ans => valueJSON.answer.includes(ans)) : valueJSON.answer == observation.answer);
