@@ -50,22 +50,23 @@ function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, impo
 }
 
 function observationEligibilityCheck(encounters, observation){
-    return encounters.some((enc) => {
-        return enc.observations.some((obs) => {
-            const valueJSON = JSON.parse(obs.valueJSON);
-            
-            if (typeof observation.answer == "string") {
-                return obs.concept.uuid == observation.uuid && valueJSON.answer == observation.answer;
-            }
-
-            if (Array.isArray(observation.answer) && Array.isArray(valueJSON.answer)) {
-                return obs.concept.uuid === observation.uuid && observation.answer.some(ans => valueJSON.answer.includes(ans));
-            }
-
-            return false;
+        return encounters.some((enc) => {
+            return enc.observations.some((obs) => {
+                const valueJSON = JSON.parse(obs.valueJSON);
+                    
+                if (obs.concept.uuid == observation.uuid){
+                    if(typeof observation.answer == "string") {
+                        return valueJSON.answer == observation.answer;
+                    }
+                    else  if (Array.isArray(observation.answer) && Array.isArray(valueJSON.answer)) {
+                        return observation.answer.some(ans => valueJSON.answer.includes(ans));
+                    }
+                }
+    
+                return false;
+            })
         })
-    })
-}
+    }
 
 function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDateConcept) {
     const baseDate = getBaseDate(enrolment, enrolmentBaseDateConcept);
