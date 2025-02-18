@@ -54,7 +54,7 @@ function observationEligibilityCheck(encounters, observation){
         return enc.observation.some((obs) => {
             const valueJSON = JSON.parse(obs.valueJSON);
             return obs.concept.uuid == observation.uuid && 
-                (Array.isArray(observation.answer) ? Array.isArray(valueJSON.answer) && observation.answer.every(ans => valueJSON.answer.includes(ans)) : valueJSON.answer == observation.answer);
+                (Array.isArray(observation.answer) ? Array.isArray(valueJSON.answer) && observation.answer.some(ans => valueJSON.answer.includes(ans)) : valueJSON.answer == observation.answer);
         })
     })
 }
