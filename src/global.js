@@ -30,7 +30,26 @@ function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDat
     const baseDate = getBaseDate(encounters[0].programEnrolment, enrolmentBaseDateConcept);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
     const day = schedule[encounters.length];
-    return day.min <= daysBetween && day.max > daysBetween;
+    //return day.min <= daysBetween && day.max > daysBetween;
+    const dueSequences = schedule
+        .filter(s => s.min <= daysBetween && daysBetween < s.max)
+        .map(s => s.sequence);
+    
+    const completedSequences = encounters
+        .map(enc => enc.observations.find(obs => obs.concept.uuid === "df2dbca8-ee23-4927-94bc-3057fdca986d"))
+        .filter(obs => obs !== undefined && obs.valueJSON)
+        .map(obs => JSON.parse(obs.valueJSON).answer)
+        .filter(answer => answer !== null);
+    
+    const missingSequences = dueSequences.filter(seq => !completedSequences.includes(seq));
+
+    const overdueSequences = schedule
+          .filter(s => missingSequences.includes(s.sequence) && daysBetween > s.max)
+          .map(s => s.sequence);
+    
+    if (overdueSequences.length > 0) { return false; }
+    
+    return missingSequences.length > 0;
 }
 
 function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, imports, schedule, encounterTypeName, dateConceptName, dateEncounterTypeName, observation){
@@ -71,7 +90,18 @@ function observationEligibilityCheck(encounters, observation){
 function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDateConcept) {
     const baseDate = getBaseDate(enrolment, enrolmentBaseDateConcept);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
-    return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
+    //return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
+
+    const completedSequences = enrolment.encounters
+        .map(enc => enc.observations.find(obs => obs.concept.uuid === "df2dbca8-ee23-4927-94bc-3057fdca986d")) 
+        .filter(obs => obs !== undefined && obs.valueJSON)
+        .map(obs => JSON.parse(obs.valueJSON).answer)
+        .filter(answer => answer !== null);
+
+    return schedule.some(s => 
+        s.min <= daysBetween && daysBetween < s.max && 
+        !completedSequences.includes(s.sequence)
+    );
 }
 
 function getBaseDate(entity, baseDateConcept) {
