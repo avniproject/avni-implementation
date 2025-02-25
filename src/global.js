@@ -36,7 +36,7 @@ function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDat
         .map(s => s.sequence);
     
     const completedSequences = encounters
-        .map(enc => enc.observations.find(obs => obs.concept.uuid === "df2dbca8-ee23-4927-94bc-3057fdca986d"))
+        .map(enc => enc.observations.find(obs => obs.concept.uuid === "5ee51584-6d54-496c-8a5f-bb7958662bb5"))
         .filter(obs => obs !== undefined && obs.valueJSON)
         .map(obs => JSON.parse(obs.valueJSON).answer)
         .filter(answer => answer !== null);
@@ -93,7 +93,7 @@ function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDat
     //return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
 
     const completedSequences = enrolment.encounters
-        .map(enc => enc.observations.find(obs => obs.concept.uuid === "df2dbca8-ee23-4927-94bc-3057fdca986d")) 
+        .map(enc => enc.observations.find(obs => obs.concept.uuid === "5ee51584-6d54-496c-8a5f-bb7958662bb5")) 
         .filter(obs => obs !== undefined && obs.valueJSON)
         .map(obs => JSON.parse(obs.valueJSON).answer)
         .filter(answer => answer !== null);
