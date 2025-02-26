@@ -96,7 +96,7 @@ function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDat
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
     //return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
 
-    if(daysBetween > cutOfDays) return false; 
+    if(daysBetween > cutOfDays) return false;
 
     const completedSequences = enrolment.encounters
         .map(enc => enc.observations.find(obs => obs.concept.uuid === "5ee51584-6d54-496c-8a5f-bb7958662bb5")) 
