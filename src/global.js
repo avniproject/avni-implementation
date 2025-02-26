@@ -173,6 +173,7 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, 
                                                                              dateConceptName,
                                                                              dateEncounterTypeName,
                                                                              cutoffMonths,
+                                                                             cutofDays,
                                                                              genderValues,
                                                                              addressValues,
                                                                              observation
