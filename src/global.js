@@ -34,7 +34,7 @@ function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDat
 
     if(daysBetween > cutofDays) return false;
     const dueSequences = schedule
-        .filter(s => s.min <= daysBetween && daysBetween < s.max)
+        .filter(s => s.min <= daysBetween && daysBetween < s.max && daysBetween < cutofDays)
         .map(s => s.sequence);
     
     const completedSequences = encounters
@@ -46,7 +46,7 @@ function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDat
     const missingSequences = dueSequences.filter(seq => !completedSequences.includes(seq));
 
     const overdueSequences = schedule
-          .filter(s => missingSequences.includes(s.sequence) && daysBetween > s.max)
+          .filter(s => missingSequences.includes(s.sequence) && daysBetween > s.max && daysBetween < cutofDays)
           .map(s => s.sequence);
     
     if (overdueSequences.length > 0) { return false; }
