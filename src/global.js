@@ -24,7 +24,7 @@ function getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounte
                     AND ${filterQuery}`, encounterType1, encounterType2, cutoffDate);
 }
 
-function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDateConcept, observation, cutOfDays) {
+function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDateConcept, observation, cutofDays) {
     if (encounters.length >= schedule.length) return false;
     if(observation && observationEligibilityCheck(encounters, observation)) return false;
     const baseDate = getBaseDate(encounters[0].programEnrolment, enrolmentBaseDateConcept);
@@ -32,7 +32,7 @@ function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDat
     const day = schedule[encounters.length];
     //return day.min <= daysBetween && day.max > daysBetween;
 
-    if(daysBetween > cutOfDays) return false;
+    if(daysBetween > cutofDays) return false;
     const dueSequences = schedule
         .filter(s => s.min <= daysBetween && daysBetween < s.max)
         .map(s => s.sequence);
@@ -54,14 +54,14 @@ function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDat
     return missingSequences.length > 0;
 }
 
-function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, imports, schedule, encounterTypeName, dateConceptName, dateEncounterTypeName, observation, cutOfDays){
+function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, imports, schedule, encounterTypeName, dateConceptName, dateEncounterTypeName, observation, cutofDays){
     const dateEncounters = encounters.filter(enc => enc.encounterType.name == dateEncounterTypeName);
     if(dateEncounters.length == 0) return false;
     
     const baseDate = getBaseDate(dateEncounters[0], dateConceptName);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
 
-    if(daysBetween > cutOfDays) return false;
+    if(daysBetween > cutofDays) return false;
     
     const targetEncounters = encounters.filter(enc => enc.encounterType.name == encounterTypeName);
     if(targetEncounters.length == 0) return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
@@ -91,12 +91,12 @@ function observationEligibilityCheck(encounters, observation){
         })
     }
 
-function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDateConcept, cutOfDays) {
+function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDateConcept, cutofDays) {
     const baseDate = getBaseDate(enrolment, enrolmentBaseDateConcept);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
     //return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
 
-    if(daysBetween > cutOfDays) return false;
+    if(daysBetween > cutofDays) return false;
 
     const completedSequences = enrolment.encounters
         .map(enc => enc.observations.find(obs => obs.concept.uuid === "5ee51584-6d54-496c-8a5f-bb7958662bb5")) 
