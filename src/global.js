@@ -54,12 +54,14 @@ function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDat
     return missingSequences.length > 0;
 }
 
-function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, imports, schedule, encounterTypeName, dateConceptName, dateEncounterTypeName, observation){
+function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, imports, schedule, encounterTypeName, dateConceptName, dateEncounterTypeName, observation, cutOfDays){
     const dateEncounters = encounters.filter(enc => enc.encounterType.name == dateEncounterTypeName);
     if(dateEncounters.length == 0) return false;
     
     const baseDate = getBaseDate(dateEncounters[0], dateConceptName);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
+
+    if(daysBetween > cutOfDays) return false;
     
     const targetEncounters = encounters.filter(enc => enc.encounterType.name == encounterTypeName);
     if(targetEncounters.length == 0) return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
@@ -190,7 +192,7 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, 
         const encounters = getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounterTypeName, dateEncounterTypeName, cutoffDate, filterQuery);
         const groupedEncounters = imports.lodash.groupBy(encounters, 'programEnrolment.uuid');
         const individuals = Object.keys(groupedEncounters)
-            .filter(enrolmentUuid => hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(groupedEncounters[enrolmentUuid], imports, schedule, encounterTypeName, dateConceptName, dateEncounterTypeName, observation))
+            .filter(enrolmentUuid => hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(groupedEncounters[enrolmentUuid], imports, schedule, encounterTypeName, dateConceptName, dateEncounterTypeName, observation, cutOfDays))
             .map(enrolmentUuid => groupedEncounters[enrolmentUuid][0].programEnrolment.individual);
         return individuals;
     }
