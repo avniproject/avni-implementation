@@ -24,13 +24,15 @@ function getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounte
                     AND ${filterQuery}`, encounterType1, encounterType2, cutoffDate);
 }
 
-function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDateConcept, observation) {
+function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDateConcept, observation, cutOfDays) {
     if (encounters.length >= schedule.length) return false;
     if(observation && observationEligibilityCheck(encounters, observation)) return false;
     const baseDate = getBaseDate(encounters[0].programEnrolment, enrolmentBaseDateConcept);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
     const day = schedule[encounters.length];
     //return day.min <= daysBetween && day.max > daysBetween;
+
+    if(daysBetween > cutOfDays) return false;
     const dueSequences = schedule
         .filter(s => s.min <= daysBetween && daysBetween < s.max)
         .map(s => s.sequence);
@@ -87,10 +89,12 @@ function observationEligibilityCheck(encounters, observation){
         })
     }
 
-function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDateConcept) {
+function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDateConcept, cutOfDays) {
     const baseDate = getBaseDate(enrolment, enrolmentBaseDateConcept);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
     //return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
+
+    if(daysBetween > cutOfDays) return false; 
 
     const completedSequences = enrolment.encounters
         .map(enc => enc.observations.find(obs => obs.concept.uuid === "5ee51584-6d54-496c-8a5f-bb7958662bb5")) 
@@ -128,6 +132,7 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, 
         encounterType,
         dateConceptName,
         cutoffMonths,
+        cutofDays,
         genderValues,
         addressValues,
         observation
@@ -150,11 +155,11 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, 
         const encounters = getAllEncountersOfType(params, encounterType, cutoffDate, encounterFilterQuery);
         const enrolmentEncounters = imports.lodash.groupBy(encounters, 'programEnrolment.uuid');
         const individuals = Object.keys(enrolmentEncounters)
-            .filter(enrolmentUuid => hasIncompleteEncounters(enrolmentEncounters[enrolmentUuid], imports, schedule, dateConceptName, observation))
+            .filter(enrolmentUuid => hasIncompleteEncounters(enrolmentEncounters[enrolmentUuid], imports, schedule, dateConceptName, observation, cutofDays))
             .map(enrolmentUuid => enrolmentEncounters[enrolmentUuid][0].programEnrolment.individual);
 
         const noEncounterEnrolments = getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, enrolmentFilterQuery)
-            .filter((enrolment) => enrolmentHasDueEncounter(enrolment, imports, schedule, dateConceptName));
+            .filter((enrolment) => enrolmentHasDueEncounter(enrolment, imports, schedule, dateConceptName, cutofDays));
 
         return individuals.concat(noEncounterEnrolments.map(enrolment => enrolment.individual));
     }
