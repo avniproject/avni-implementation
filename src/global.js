@@ -105,7 +105,7 @@ function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDat
         .filter(answer => answer !== null);
 
     return schedule.some(s => 
-        s.min <= daysBetween && daysBetween < s.max && daysBetween < cutOfDays
+        s.min <= daysBetween && daysBetween < s.max && daysBetween < cutOfDays &&
         !completedSequences.includes(s.sequence)
     );
 }
