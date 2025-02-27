@@ -30,9 +30,8 @@ function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDat
     const baseDate = getBaseDate(encounters[0].programEnrolment, enrolmentBaseDateConcept);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
     const day = schedule[encounters.length];
-    //return day.min <= daysBetween && day.max > daysBetween;
+    //return day.min <= daysBetween && day.max > daysBetween
     
-    console.log('Name--->',encounters[0].programEnrolment.individual.name);
     if(daysBetween > cutofDays) {return false;}
     
     const dueSequences = schedule
@@ -111,8 +110,7 @@ function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDat
   const baseDate = getBaseDate(enrolment, enrolmentBaseDateConcept);
   const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
   //return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
-  
-  console.log('Checking enrolment for:', enrolment.individual.name);
+
   if(daysBetween > cutofDays) return false;
 
   const completedSequences = enrolment.encounters
