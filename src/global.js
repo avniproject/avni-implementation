@@ -66,12 +66,26 @@ function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, impo
     if(daysBetween > cutofDays) return false;
     
     const targetEncounters = encounters.filter(enc => enc.encounterType.name == encounterTypeName);
-    if(targetEncounters.length == 0) return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
+    //if(targetEncounters.length == 0) return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
     if(observation && observationEligibilityCheck(targetEncounters, observation)) return false;
     if (targetEncounters.length >= schedule.length) return false;
     
     const day = schedule[targetEncounters.length];
-    return day.min <= daysBetween && day.max > daysBetween;
+    //return day.min <= daysBetween && day.max > daysBetween;
+
+    const dueSequences = schedule
+        .filter(s => s.min <= daysBetween && daysBetween < s.max)
+        .map(s => s.sequence);
+    
+    const completedSequences = encounters
+        .map(enc => enc.observations.find(obs => obs.concept.uuid === "5ee51584-6d54-496c-8a5f-bb7958662bb5"))
+        .filter(obs => obs !== undefined && obs.valueJSON)
+        .map(obs => JSON.parse(obs.valueJSON).answer)
+        .filter(answer => answer !== null);
+    
+    const missingSequences = dueSequences.filter(seq => !completedSequences.includes(seq));
+    
+    return missingSequences.length > 0;
 }
 
 function observationEligibilityCheck(encounters, observation){
