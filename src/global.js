@@ -86,7 +86,7 @@ function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, impo
 
     console.log('Name---->',dateEncounters[0].programEnrolment.individual.name);
     console.log('dueSequences--->',dueSequences);
-    console.log('dueSequences--->',completedSequences);
+    console.log('completedSequences--->',completedSequences);
     console.log('missingSequences--->',missingSequences);
     
     return missingSequences.length > 0;
