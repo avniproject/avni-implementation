@@ -83,11 +83,6 @@ function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, impo
         .filter(answer => answer !== null);
     
     const missingSequences = dueSequences.filter(seq => !completedSequences.includes(seq));
-
-    console.log('Name---->',dateEncounters[0].programEnrolment.individual.name);
-    console.log('dueSequences--->',dueSequences);
-    console.log('completedSequences--->',completedSequences);
-    console.log('missingSequences--->',missingSequences);
     
     return missingSequences.length > 0;
 }
