@@ -34,7 +34,7 @@ function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDat
 
     if(daysBetween > cutofDays) return false;
     const dueSequences = schedule
-        .filter(s => s.min <= daysBetween && daysBetween < s.max && daysBetween < cutofDays)
+        .filter(s => s.min <= daysBetween && daysBetween < s.max)
         .map(s => s.sequence);
     
     const completedSequences = encounters
