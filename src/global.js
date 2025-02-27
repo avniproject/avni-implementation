@@ -46,7 +46,7 @@ function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDat
     const missingSequences = dueSequences.filter(seq => !completedSequences.includes(seq));
 
     const overdueSequences = schedule
-          .filter(s => missingSequences.includes(s.sequence) && daysBetween > s.max && daysBetween < cutofDays)
+          .filter(s => missingSequences.includes(s.sequence) && daysBetween > s.max)
           .map(s => s.sequence);
     
     if (overdueSequences.length > 0) { return false; }
