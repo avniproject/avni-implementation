@@ -24,36 +24,6 @@ function getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounte
                     AND ${filterQuery}`, encounterType1, encounterType2, cutoffDate);
 }
 
-/*function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDateConcept, observation, cutofDays) {
-    if (encounters.length >= schedule.length) return false;
-    if(observation && observationEligibilityCheck(encounters, observation)) return false;
-    const baseDate = getBaseDate(encounters[0].programEnrolment, enrolmentBaseDateConcept);
-    const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
-    const day = schedule[encounters.length];
-    //return day.min <= daysBetween && day.max > daysBetween;
-
-    if(daysBetween > cutofDays) return false;
-    const dueSequences = schedule
-        .filter(s => s.min <= daysBetween && daysBetween < s.max)
-        .map(s => s.sequence);
-    
-    const completedSequences = encounters
-        .map(enc => enc.observations.find(obs => obs.concept.uuid === "5ee51584-6d54-496c-8a5f-bb7958662bb5"))
-        .filter(obs => obs !== undefined && obs.valueJSON)
-        .map(obs => JSON.parse(obs.valueJSON).answer)
-        .filter(answer => answer !== null);
-    
-    const missingSequences = dueSequences.filter(seq => !completedSequences.includes(seq));
-
-    const overdueSequences = schedule
-          .filter(s => missingSequences.includes(s.sequence) && daysBetween > s.max)
-          .map(s => s.sequence);
-    
-    if (overdueSequences.length > 0) { return false; }
-    
-    return missingSequences.length > 0;
-}*/
-
 function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDateConcept, observation, cutofDays) {
     if (encounters.length >= schedule.length) return false;
     if(observation && observationEligibilityCheck(encounters, observation)) return false;
@@ -122,25 +92,6 @@ function observationEligibilityCheck(encounters, observation){
         })
     })
 }
-
-/*function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDateConcept, cutofDays) {
-    const baseDate = getBaseDate(enrolment, enrolmentBaseDateConcept);
-    const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
-    //return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
-
-    if(daysBetween > cutofDays) return false;
-
-    const completedSequences = enrolment.encounters
-        .map(enc => enc.observations.find(obs => obs.concept.uuid === "5ee51584-6d54-496c-8a5f-bb7958662bb5")) 
-        .filter(obs => obs !== undefined && obs.valueJSON)
-        .map(obs => JSON.parse(obs.valueJSON).answer)
-        .filter(answer => answer !== null);
-
-    return schedule.some(s => 
-        s.min <= daysBetween && daysBetween < s.max && daysBetween < cutofDays &&
-        !completedSequences.includes(s.sequence)
-    );
-}*/
 
 function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDateConcept, cutofDays) {
   const baseDate = getBaseDate(enrolment, enrolmentBaseDateConcept);
