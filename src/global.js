@@ -24,7 +24,7 @@ function getAllEncountersOfType_DependentOnAnotherEncounterType(params, encounte
                     AND ${filterQuery}`, encounterType1, encounterType2, cutoffDate);
 }
 
-function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDateConcept, observation, cutofDays) {
+/*function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDateConcept, observation, cutofDays) {
     if (encounters.length >= schedule.length) return false;
     if(observation && observationEligibilityCheck(encounters, observation)) return false;
     const baseDate = getBaseDate(encounters[0].programEnrolment, enrolmentBaseDateConcept);
@@ -52,6 +52,38 @@ function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDat
     if (overdueSequences.length > 0) { return false; }
     
     return missingSequences.length > 0;
+}*/
+
+function hasIncompleteEncounters(encounters, imports, schedule, enrolmentBaseDateConcept, observation, cutofDays) {
+    if (encounters.length >= schedule.length) return false;
+    if(observation && observationEligibilityCheck(encounters, observation)) return false;
+    const baseDate = getBaseDate(encounters[0].programEnrolment, enrolmentBaseDateConcept);
+    const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
+    const day = schedule[encounters.length];
+    //return day.min <= daysBetween && day.max > daysBetween;
+    
+    console.log('Name--->',encounters[0].programEnrolment.individual.name);
+    if(daysBetween > cutofDays) {return false;}
+    
+    const dueSequences = schedule
+        .filter(s => s.min <= daysBetween && daysBetween < s.max)
+        .map(s => s.sequence);
+    
+    const completedSequences = encounters
+        .map(enc => enc.observations.find(obs => obs.concept.uuid === "5ee51584-6d54-496c-8a5f-bb7958662bb5"))
+        .filter(obs => obs !== undefined && obs.valueJSON)
+        .map(obs => JSON.parse(obs.valueJSON).answer)
+        .filter(answer => answer !== null);
+    
+    const missingSequences = dueSequences.filter(seq => !completedSequences.includes(seq));
+
+    const overdueSequences = schedule
+          .filter(s => missingSequences.includes(s.sequence) && daysBetween > s.max)
+          .map(s => s.sequence);
+    
+    if (overdueSequences.length > 0) { return false; }
+    
+    return missingSequences.length > 0;
 }
 
 function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, imports, schedule, encounterTypeName, dateConceptName, dateEncounterTypeName, observation, cutofDays){
@@ -60,7 +92,7 @@ function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, impo
     
     const baseDate = getBaseDate(dateEncounters[0], dateConceptName);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
-
+    
     if(daysBetween > cutofDays) return false;
     
     const targetEncounters = encounters.filter(enc => enc.encounterType.name == encounterTypeName);
@@ -73,25 +105,25 @@ function hasIncompleteEncounters_BasedOnAnotherEncounterTypeObs(encounters, impo
 }
 
 function observationEligibilityCheck(encounters, observation){
-        return encounters.some((enc) => {
-            return enc.observations.some((obs) => {
-                const valueJSON = JSON.parse(obs.valueJSON);
-                    
-                if (obs.concept.uuid == observation.uuid){
-                    if(typeof observation.answer == "string") {
-                        return valueJSON.answer == observation.answer;
-                    }
-                    else  if (Array.isArray(observation.answer) && Array.isArray(valueJSON.answer)) {
-                        return observation.answer.some(ans => valueJSON.answer.includes(ans));
-                    }
+    return encounters.some((enc) => {
+        return enc.observations.some((obs) => {
+            const valueJSON = JSON.parse(obs.valueJSON);
+                
+            if (obs.concept.uuid == observation.uuid){
+                if(typeof observation.answer == "string") {
+                    return valueJSON.answer == observation.answer;
                 }
-    
-                return false;
-            })
-        })
-    }
+                else  if (Array.isArray(observation.answer) && Array.isArray(valueJSON.answer)) {
+                    return observation.answer.some(ans => valueJSON.answer.includes(ans));
+                }
+            }
 
-function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDateConcept, cutofDays) {
+            return false;
+        })
+    })
+}
+
+/*function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDateConcept, cutofDays) {
     const baseDate = getBaseDate(enrolment, enrolmentBaseDateConcept);
     const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
     //return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
@@ -108,7 +140,29 @@ function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDat
         s.min <= daysBetween && daysBetween < s.max && daysBetween < cutofDays &&
         !completedSequences.includes(s.sequence)
     );
+}*/
+
+function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDateConcept, cutofDays) {
+  const baseDate = getBaseDate(enrolment, enrolmentBaseDateConcept);
+  const daysBetween = imports.moment(new Date()).diff(imports.moment(baseDate), 'days');
+  //return schedule[0].min <= daysBetween && schedule[0].max > daysBetween;
+  
+  console.log('Checking enrolment for:', enrolment.individual.name);
+  if(daysBetween > cutofDays) return false;
+
+  const completedSequences = enrolment.encounters
+      .map(enc => enc.observations.find(obs => obs.concept.uuid === "5ee51584-6d54-496c-8a5f-bb7958662bb5")) 
+      .filter(obs => obs !== undefined && obs.valueJSON)
+      .map(obs => JSON.parse(obs.valueJSON).answer)
+      .filter(answer => answer !== null);
+
+  return schedule.some(s => 
+      s.min <= daysBetween && daysBetween < s.max && daysBetween < cutofDays &&
+      !completedSequences.includes(s.sequence)
+  );
 }
+
+
 
 function getBaseDate(entity, baseDateConcept) {
     return entity.getObservationValue(baseDateConcept);
