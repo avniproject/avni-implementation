@@ -125,8 +125,6 @@ function enrolmentHasDueEncounter(enrolment, imports, schedule, enrolmentBaseDat
   );
 }
 
-
-
 function getBaseDate(entity, baseDateConcept) {
     return entity.getObservationValue(baseDateConcept);
 }
@@ -142,6 +140,11 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, 
                         AND $encounter.voided == false
                     ).@count == 0
                     AND ${filterQuery}`, programName, encounterType);
+}
+
+function hasDeliveryEncounter(params, individualUuid) {
+    const deliveryEncounters = params.db.objects('ProgramEncounter').filtered(`voided == false AND programEnrolment.individual.uuid == $0         AND encounterType.name == 'Delivery'`, individualUuid);
+    return deliveryEncounters.length > 0;
 }
 
 () => {
@@ -174,11 +177,26 @@ function getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, 
         const encounters = getAllEncountersOfType(params, encounterType, cutoffDate, encounterFilterQuery);
         const enrolmentEncounters = imports.lodash.groupBy(encounters, 'programEnrolment.uuid');
         const individuals = Object.keys(enrolmentEncounters)
-            .filter(enrolmentUuid => hasIncompleteEncounters(enrolmentEncounters[enrolmentUuid], imports, schedule, dateConceptName, observation, cutofDays))
+            //.filter(enrolmentUuid => hasIncompleteEncounters(enrolmentEncounters[enrolmentUuid], imports, schedule, dateConceptName, observation, cutofDays))
+            .filter(enrolmentUuid => {
+                const enrolment = enrolmentEncounters[enrolmentUuid][0].programEnrolment;
+                if (hasDeliveryEncounter(params, enrolment.individual.uuid)) {
+                  return false;
+                }
+                const hasDue = hasIncompleteEncounters(enrolmentEncounters[enrolmentUuid], imports, schedule, dateConceptName, observation, cutofDays);
+                return hasDue;
+            })
             .map(enrolmentUuid => enrolmentEncounters[enrolmentUuid][0].programEnrolment.individual);
 
         const noEncounterEnrolments = getEnrolmentsWithNoEncounterOfType(params, encounterType, programName, enrolmentFilterQuery)
-            .filter((enrolment) => enrolmentHasDueEncounter(enrolment, imports, schedule, dateConceptName, cutofDays));
+        //.filter((enrolment) => enrolmentHasDueEncounter(enrolment, imports, schedule, dateConceptName, cutofDays));
+        noEncounterEnrolments = noEncounterEnrolments.filter((enrolment) => {
+            if (hasDeliveryEncounter(params, enrolment.individual.uuid)) {
+                return false;
+            }
+            const hasDue = enrolmentHasDueEncounter(enrolment, imports, schedule, dateConceptName, cutofDays);
+            return hasDue;
+        });
 
         return individuals.concat(noEncounterEnrolments.map(enrolment => enrolment.individual));
     }
